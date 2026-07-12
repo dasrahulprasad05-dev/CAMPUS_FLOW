@@ -1,0 +1,210 @@
+// This is your Prisma schema file
+// Learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum UserRole {
+  student
+  parent
+  teacher
+  admin
+}
+
+enum NoticePriority {
+  normal
+  important
+  urgent
+}
+
+model User {
+  id            String    @id @default(cuid())
+  name          String?
+  email         String    @unique
+  emailVerified DateTime?
+  image         String?
+  password      String?   // hashed, null for OAuth users
+  role          UserRole  @default(student)
+  phone         String?
+  isActive      Boolean   @default(true)
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  // NextAuth relations
+  accounts      Account[]
+  sessions      Session[]
+
+  // Domain relations
+  studentProfile  StudentProfile?
+  teacherProfile  TeacherProfile?
+  parentLinks     ParentStudentLink[] @relation("ParentLinks")
+  childLinks      ParentStudentLink[] @relation("ChildLinks")
+  authoredNotices Notice[]
+  noticeRecipients NoticeRecipient[]
+
+  @@index([role])
+  @@map("users")
+}
+
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String? @db.Text
+  access_token      String? @db.Text
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String? @db.Text
+  session_state     String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+  @@map("accounts")
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("sessions")
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+  @@map("verification_tokens")
+}
+
+model Department {
+  id          String    @id @default(cuid())
+  name        String
+  code        String    @unique
+  description String?
+  createdAt   DateTime  @default(now())
+
+  programs        Program[]
+  teacherProfiles TeacherProfile[]
+  courses         Course[]
+
+  @@map("departments")
+}
+
+model Program {
+  id            String    @id @default(cuid())
+  departmentId  String
+  name          String
+  code          String    @unique
+  durationYears Int
+  createdAt     DateTime  @default(now())
+
+  department      Department       @relation(fields: [departmentId], references: [id], onDelete: Cascade)
+  studentProfiles StudentProfile[]
+
+  @@map("programs")
+}
+
+model StudentProfile {
+  userId          String   @id
+  studentNumber   String   @unique
+  programId       String?
+  admissionYear   Int?
+  currentSemester Int?
+  dateOfBirth     DateTime?
+  createdAt       DateTime @default(now())
+
+  user    User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  program Program? @relation(fields: [programId], references: [id])
+
+  @@map("student_profiles")
+}
+
+model TeacherProfile {
+  userId        String   @id
+  employeeNumber String  @unique
+  departmentId  String?
+  designation   String?
+  createdAt     DateTime @default(now())
+
+  user       User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  department Department? @relation(fields: [departmentId], references: [id])
+
+  @@map("teacher_profiles")
+}
+
+model ParentStudentLink {
+  id           String   @id @default(cuid())
+  parentId     String
+  studentId    String
+  relationship String
+  isVerified   Boolean  @default(false)
+  createdAt    DateTime @default(now())
+
+  parent  User @relation("ParentLinks", fields: [parentId], references: [id], onDelete: Cascade)
+  student User @relation("ChildLinks", fields: [studentId], references: [id], onDelete: Cascade)
+
+  @@unique([parentId, studentId])
+  @@map("parent_student_links")
+}
+
+model Course {
+  id           String   @id @default(cuid())
+  departmentId String
+  title        String
+  code         String   @unique
+  creditHours  Int      @default(3)
+  description  String?
+  createdAt    DateTime @default(now())
+
+  department Department @relation(fields: [departmentId], references: [id], onDelete: Cascade)
+
+  @@map("courses")
+}
+
+model Notice {
+  id          String         @id @default(cuid())
+  authorId    String
+  title       String
+  content     String         @db.Text
+  priority    NoticePriority @default(normal)
+  publishedAt DateTime?
+  expiresAt   DateTime?
+  isPinned    Boolean        @default(false)
+  createdAt   DateTime       @default(now())
+  updatedAt   DateTime       @updatedAt
+
+  author     User              @relation(fields: [authorId], references: [id])
+  recipients NoticeRecipient[]
+
+  @@index([publishedAt(sort: Desc)])
+  @@map("notices")
+}
+
+model NoticeRecipient {
+  id         String    @id @default(cuid())
+  noticeId   String
+  recipientId String
+  readAt     DateTime?
+  createdAt  DateTime  @default(now())
+
+  notice    Notice @relation(fields: [noticeId], references: [id], onDelete: Cascade)
+  recipient User   @relation(fields: [recipientId], references: [id], onDelete: Cascade)
+
+  @@unique([noticeId, recipientId])
+  @@index([recipientId])
+  @@map("notice_recipients")
+}
