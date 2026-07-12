@@ -7,11 +7,11 @@ declare global {
 }
 
 function makePrismaClient(): PrismaClient {
-  const url = process.env.DATABASE_URL;
+  const url = process.env.DATABASE_URL || "postgres://dummy:dummy@dummy/dummy";
 
-  if (!url) {
-    throw new Error(
-      "DATABASE_URL is not set. Add your Neon connection string to .env.local",
+  if (!process.env.DATABASE_URL) {
+    console.warn(
+      "DATABASE_URL is not set. Using dummy connection string for build purposes. Remember to set it in your Vercel project settings.",
     );
   }
 
