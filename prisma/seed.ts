@@ -1,4 +1,4 @@
-import { PrismaClient } from "@prisma/client";
+import { PrismaClient, UserRole } from "@prisma/client";
 import { PrismaNeon } from "@prisma/adapter-neon";
 import bcrypt from "bcryptjs";
 
@@ -16,28 +16,28 @@ async function main() {
       name: "Admin User",
       email: "admin@campusflow.edu",
       password: passwordHash,
-      role: "admin",
+      role: "admin" as UserRole,
       isActive: true,
     },
     {
       name: "Teacher Smith",
       email: "teacher@campusflow.edu",
       password: passwordHash,
-      role: "teacher",
+      role: "teacher" as UserRole,
       isActive: true,
     },
     {
       name: "Student John",
       email: "student@campusflow.edu",
       password: passwordHash,
-      role: "student",
+      role: "student" as UserRole,
       isActive: true,
     },
     {
       name: "Parent Doe",
       email: "parent@campusflow.edu",
       password: passwordHash,
-      role: "parent",
+      role: "parent" as UserRole,
       isActive: true,
     },
   ];
