@@ -32,4 +32,3 @@ export const prisma: PrismaClient =
 if (process.env.NODE_ENV !== "production") {
   globalThis.__prisma = prisma;
 }
-

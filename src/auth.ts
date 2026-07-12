@@ -30,6 +30,14 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       }
       return session;
     },
+    // Prevent adapter from interfering with credentials sign-in
+    async signIn({ user, account }) {
+      if (account?.provider === "credentials") {
+        // User was already verified in authorize(); allow sign-in
+        return true;
+      }
+      return true;
+    },
   },
   providers: [
     Credentials({

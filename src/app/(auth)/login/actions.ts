@@ -48,9 +48,18 @@ export async function loginAction(
       redirect: false,
     });
   } catch (error) {
+    // NextAuth signIn() throws NEXT_REDIRECT on success with redirect: true.
+    // With redirect: false it may still throw in some versions.
+    // Re-throw redirect errors so Next.js handles them, only catch AuthError.
     if (error instanceof AuthError) {
-      return { error: "The email address or password is incorrect." };
+      switch (error.type) {
+        case "CredentialsSignin":
+          return { error: "The email address or password is incorrect." };
+        default:
+          return { error: "Something went wrong. Please try again." };
+      }
     }
+    // Re-throw any other error (including NEXT_REDIRECT)
     throw error;
   }
 
@@ -62,4 +71,3 @@ export async function loginAction(
 
   redirect(dashboardForRole((freshUser?.role ?? "student") as UserRole));
 }
-
