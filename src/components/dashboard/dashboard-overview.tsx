@@ -7,7 +7,7 @@ export interface DashboardStatistic {
   label: string;
   value: string;
   description: string;
-  icon: LucideIcon;
+  icon: React.ReactNode;
   color: "indigo" | "cyan" | "emerald" | "amber";
 }
 
@@ -110,7 +110,7 @@ export function DashboardOverview({
         variants={containerVariants}
         className="mt-6 grid gap-4 sm:grid-cols-2 xl:grid-cols-4"
       >
-        {statistics.map(({ label, value, description, icon: Icon, color }, idx) => (
+        {statistics.map(({ label, value, description, icon, color }, idx) => (
           <motion.article
             key={label}
             variants={itemVariants}
@@ -121,9 +121,9 @@ export function DashboardOverview({
             <div className="absolute inset-0 bg-gradient-to-br from-white/5 to-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
             <div className="relative flex items-start justify-between">
               <span
-                className={`grid size-12 place-items-center rounded-2xl border ${colors[color]}`}
+                className={`grid size-12 place-items-center rounded-2xl border [&>svg]:size-6 ${colors[color]}`}
               >
-                <Icon className="size-6" />
+                {icon}
               </span>
             </div>
 
