@@ -68,6 +68,7 @@ model User {
   teacherProfile  TeacherProfile?
   parentLinks     ParentStudentLink[] @relation("ParentLinks")
   childLinks      ParentStudentLink[] @relation("ChildLinks")
+  parentRequests  ParentRequest[]     @relation("ParentRequests")
   authoredNotices Notice[]
   noticeRecipients NoticeRecipient[]
   
@@ -219,12 +220,16 @@ model ParentStudentLink {
 
 model ParentRequest {
   id                String   @id @default(cuid())
+  parentId          String
   parentName        String
   parentEmail       String   @unique
   studentRollNumber String
   relationship      String
   status            ParentRequestStatus @default(pending)
   createdAt         DateTime @default(now())
+  reviewedAt        DateTime?
+
+  parent User @relation("ParentRequests", fields: [parentId], references: [id], onDelete: Cascade)
 
   @@map("parent_requests")
 }
