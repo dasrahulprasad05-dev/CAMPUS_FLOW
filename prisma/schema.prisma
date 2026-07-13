@@ -1,5 +1,4 @@
 // This is your Prisma schema file
-// Learn more about it in the docs: https://pris.ly/d/prisma-schema
 
 generator client {
   provider = "prisma-client-js"
@@ -7,6 +6,7 @@ generator client {
 
 datasource db {
   provider = "postgresql"
+  url      = env("DATABASE_URL")
 }
 
 enum UserRole {
@@ -22,24 +22,49 @@ enum NoticePriority {
   urgent
 }
 
+enum ExamType {
+  assignment
+  quiz
+  mid_semester
+  end_semester
+  practical
+}
+
+enum AttendanceStatus {
+  present
+  absent
+  late
+  excused
+}
+
+enum FeeStatus {
+  pending
+  partial
+  paid
+}
+
+enum ParentRequestStatus {
+  pending
+  approved
+  rejected
+}
+
 model User {
   id            String    @id @default(cuid())
   name          String?
   email         String    @unique
   emailVerified DateTime?
   image         String?
-  password      String?   // hashed, null for OAuth users
+  password      String?
   role          UserRole  @default(student)
   phone         String?
   isActive      Boolean   @default(true)
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
 
-  // NextAuth relations
   accounts      Account[]
   sessions      Session[]
 
-  // Domain relations
   studentProfile  StudentProfile?
   teacherProfile  TeacherProfile?
   parentLinks     ParentStudentLink[] @relation("ParentLinks")
@@ -81,15 +106,6 @@ model Session {
   @@map("sessions")
 }
 
-model VerificationToken {
-  identifier String
-  token      String   @unique
-  expires    DateTime
-
-  @@unique([identifier, token])
-  @@map("verification_tokens")
-}
-
 model Department {
   id          String    @id @default(cuid())
   name        String
@@ -97,51 +113,87 @@ model Department {
   description String?
   createdAt   DateTime  @default(now())
 
-  programs        Program[]
   teacherProfiles TeacherProfile[]
-  courses         Course[]
+  studentProfiles StudentProfile[]
+  subjects        Subject[]
+  teachingAssignments TeachingAssignment[]
+  sections        Section[]
 
   @@map("departments")
 }
 
-model Program {
-  id            String    @id @default(cuid())
-  departmentId  String
-  name          String
-  code          String    @unique
-  durationYears Int
-  createdAt     DateTime  @default(now())
+model AcademicYear {
+  id          String    @id @default(cuid())
+  name        String    @unique // e.g. "2026-27"
+  startDate   DateTime
+  endDate     DateTime
+  isCurrent   Boolean   @default(false)
+  createdAt   DateTime  @default(now())
 
-  department      Department       @relation(fields: [departmentId], references: [id], onDelete: Cascade)
+  teachingAssignments TeachingAssignment[]
+  feeRecords          FeeRecord[]
+
+  @@map("academic_years")
+}
+
+model Section {
+  id          String    @id @default(cuid())
+  name        String    @unique // e.g. "A", "B"
+  createdAt   DateTime  @default(now())
+  
+  departmentId String?
+  department   Department? @relation(fields: [departmentId], references: [id])
+  semester     Int?
+
   studentProfiles StudentProfile[]
+  teachingAssignments TeachingAssignment[]
 
-  @@map("programs")
+  @@map("sections")
+}
+
+model Subject {
+  id          String    @id @default(cuid())
+  name        String
+  code        String    @unique
+  creditHours Int       @default(3)
+  description String?
+  createdAt   DateTime  @default(now())
+  
+  departmentId String
+  department   Department @relation(fields: [departmentId], references: [id])
+
+  teachingAssignments TeachingAssignment[]
+
+  @@map("subjects")
 }
 
 model StudentProfile {
   userId          String   @id
-  studentNumber   String   @unique
-  programId       String?
+  rollNumber      String   @unique
+  departmentId    String
+  semester        Int
+  sectionId       String
   admissionYear   Int?
-  currentSemester Int?
-  dateOfBirth     DateTime?
   createdAt       DateTime @default(now())
 
-  user    User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  program Program? @relation(fields: [programId], references: [id])
+  user       User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  department Department @relation(fields: [departmentId], references: [id])
+  section    Section    @relation(fields: [sectionId], references: [id])
 
   @@map("student_profiles")
 }
 
 model TeacherProfile {
-  userId        String   @id
-  employeeNumber String  @unique
-  departmentId  String?
-  designation   String?
-  createdAt     DateTime @default(now())
+  userId         String   @id
+  employeeNumber String   @unique
+  departmentId   String?
+  designation    String?
+  createdAt      DateTime @default(now())
 
   user       User        @relation(fields: [userId], references: [id], onDelete: Cascade)
   department Department? @relation(fields: [departmentId], references: [id])
+
+  teachingAssignments TeachingAssignment[]
 
   @@map("teacher_profiles")
 }
@@ -161,18 +213,145 @@ model ParentStudentLink {
   @@map("parent_student_links")
 }
 
-model Course {
+model ParentRequest {
+  id                String   @id @default(cuid())
+  parentName        String
+  parentEmail       String   @unique
+  studentRollNumber String
+  relationship      String
+  status            ParentRequestStatus @default(pending)
+  createdAt         DateTime @default(now())
+
+  @@map("parent_requests")
+}
+
+model TeachingAssignment {
+  id               String   @id @default(cuid())
+  teacherProfileId String
+  subjectId        String
+  departmentId     String
+  semester         Int
+  sectionId        String
+  academicYearId   String
+  createdAt        DateTime @default(now())
+
+  teacher      TeacherProfile @relation(fields: [teacherProfileId], references: [userId], onDelete: Cascade)
+  subject      Subject        @relation(fields: [subjectId], references: [id], onDelete: Cascade)
+  department   Department     @relation(fields: [departmentId], references: [id], onDelete: Cascade)
+  section      Section        @relation(fields: [sectionId], references: [id], onDelete: Cascade)
+  academicYear AcademicYear   @relation(fields: [academicYearId], references: [id], onDelete: Cascade)
+
+  attendance   Attendance[]
+  internalMarks InternalMarks[]
+  assignments   Assignment[]
+  studyMaterials StudyMaterial[]
+  timetableSlots TimetableSlot[]
+
+  @@unique([teacherProfileId, subjectId, departmentId, semester, sectionId, academicYearId])
+  @@map("teaching_assignments")
+}
+
+model Attendance {
+  id                   String   @id @default(cuid())
+  teachingAssignmentId String
+  studentId            String
+  date                 DateTime @db.Date
+  status               AttendanceStatus
+  createdAt            DateTime @default(now())
+
+  teachingAssignment TeachingAssignment @relation(fields: [teachingAssignmentId], references: [id], onDelete: Cascade)
+
+  @@unique([teachingAssignmentId, studentId, date])
+  @@map("attendance")
+}
+
+model InternalMarks {
+  id                   String   @id @default(cuid())
+  teachingAssignmentId String
+  studentId            String
+  examType             ExamType
+  title                String
+  maxMarks             Float
+  marksObtained        Float
+  createdAt            DateTime @default(now())
+
+  teachingAssignment TeachingAssignment @relation(fields: [teachingAssignmentId], references: [id], onDelete: Cascade)
+
+  @@map("internal_marks")
+}
+
+model Assignment {
+  id                   String   @id @default(cuid())
+  teachingAssignmentId String
+  title                String
+  description          String   @db.Text
+  dueDate              DateTime
+  totalMarks           Float
+  createdAt            DateTime @default(now())
+
+  teachingAssignment TeachingAssignment @relation(fields: [teachingAssignmentId], references: [id], onDelete: Cascade)
+  submissions        AssignmentSubmission[]
+
+  @@map("assignments")
+}
+
+model AssignmentSubmission {
   id           String   @id @default(cuid())
-  departmentId String
-  title        String
-  code         String   @unique
-  creditHours  Int      @default(3)
-  description  String?
-  createdAt    DateTime @default(now())
+  assignmentId String
+  studentId    String
+  text         String?  @db.Text
+  fileUrl      String?
+  submittedAt  DateTime @default(now())
+  marks        Float?
+  feedback     String?  @db.Text
 
-  department Department @relation(fields: [departmentId], references: [id], onDelete: Cascade)
+  assignment Assignment @relation(fields: [assignmentId], references: [id], onDelete: Cascade)
 
-  @@map("courses")
+  @@unique([assignmentId, studentId])
+  @@map("assignment_submissions")
+}
+
+model StudyMaterial {
+  id                   String   @id @default(cuid())
+  teachingAssignmentId String
+  title                String
+  description          String?  @db.Text
+  fileUrl              String
+  uploadedAt           DateTime @default(now())
+
+  teachingAssignment TeachingAssignment @relation(fields: [teachingAssignmentId], references: [id], onDelete: Cascade)
+
+  @@map("study_materials")
+}
+
+model TimetableSlot {
+  id                   String   @id @default(cuid())
+  teachingAssignmentId String
+  dayOfWeek            String   // 'monday', 'tuesday', etc.
+  startTime            String   // '09:00'
+  endTime              String   // '10:00'
+  room                 String?
+
+  teachingAssignment TeachingAssignment @relation(fields: [teachingAssignmentId], references: [id], onDelete: Cascade)
+
+  @@map("timetable_slots")
+}
+
+model FeeRecord {
+  id             String   @id @default(cuid())
+  studentId      String
+  academicYearId String
+  feeType        String   // 'Tuition', 'Hostel', etc.
+  description    String?
+  amount         Float
+  paidAmount     Float    @default(0)
+  dueDate        DateTime @db.Date
+  status         FeeStatus @default(pending)
+  createdAt      DateTime @default(now())
+
+  academicYear AcademicYear @relation(fields: [academicYearId], references: [id], onDelete: Cascade)
+
+  @@map("fee_records")
 }
 
 model Notice {
