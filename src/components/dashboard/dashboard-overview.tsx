@@ -1,4 +1,7 @@
+"use client";
+
 import type { LucideIcon } from "lucide-react";
+import { motion } from "framer-motion";
 
 export interface DashboardStatistic {
   label: string;
@@ -27,16 +30,29 @@ interface DashboardOverviewProps {
 }
 
 const colors = {
-  indigo: "bg-indigo-50 text-indigo-600",
-  cyan: "bg-cyan-50 text-cyan-600",
-  emerald: "bg-emerald-50 text-emerald-600",
-  amber: "bg-amber-50 text-amber-600",
+  indigo: "bg-indigo-500/20 text-indigo-400 border-indigo-500/30",
+  cyan: "bg-cyan-500/20 text-cyan-400 border-cyan-500/30",
+  emerald: "bg-emerald-500/20 text-emerald-400 border-emerald-500/30",
+  amber: "bg-amber-500/20 text-amber-400 border-amber-500/30",
 };
 
 const priorities = {
-  Normal: "bg-slate-100 text-slate-600",
-  Important: "bg-amber-100 text-amber-700",
-  Urgent: "bg-red-100 text-red-700",
+  Normal: "bg-white/5 text-slate-300 border-white/10",
+  Important: "bg-amber-500/10 text-amber-400 border-amber-500/20",
+  Urgent: "bg-red-500/10 text-red-400 border-red-500/20",
+};
+
+const containerVariants = {
+  hidden: { opacity: 0 },
+  show: {
+    opacity: 1,
+    transition: { staggerChildren: 0.1 },
+  },
+};
+
+const itemVariants = {
+  hidden: { opacity: 0, y: 20 },
+  show: { opacity: 1, y: 0, transition: { type: "spring", stiffness: 300, damping: 24 } },
 };
 
 export function DashboardOverview({
@@ -48,91 +64,135 @@ export function DashboardOverview({
   upcoming,
 }: DashboardOverviewProps) {
   return (
-    <div className="mx-auto max-w-7xl">
-      <section className="relative overflow-hidden rounded-3xl bg-slate-950 p-6 text-white shadow-xl sm:p-8">
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_80%_20%,rgba(99,102,241,0.45),transparent_30%),radial-gradient(circle_at_10%_90%,rgba(6,182,212,0.2),transparent_30%)]" />
+    <motion.div
+      variants={containerVariants}
+      initial="hidden"
+      animate="show"
+      className="mx-auto max-w-7xl"
+    >
+      <motion.section
+        variants={itemVariants}
+        className="relative overflow-hidden rounded-3xl bg-slate-900/50 p-6 text-white shadow-2xl ring-1 ring-white/10 backdrop-blur-3xl sm:p-8"
+      >
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_80%_20%,rgba(99,102,241,0.25),transparent_40%),radial-gradient(circle_at_10%_90%,rgba(6,182,212,0.15),transparent_40%)]" />
 
         <div className="relative max-w-3xl">
-          <p className="text-sm font-semibold uppercase tracking-[0.18em] text-indigo-300">
-            {eyebrow}
-          </p>
-
-          <h1 className="mt-3 text-3xl font-bold tracking-tight sm:text-4xl">
-            {title}
-          </h1>
-
-          <p className="mt-3 max-w-2xl leading-7 text-slate-300">
-            {description}
-          </p>
-        </div>
-      </section>
-
-      <section className="mt-6 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-        {statistics.map(({ label, value, description, icon: Icon, color }) => (
-          <article
-            key={label}
-            className="group rounded-3xl border border-slate-200 bg-white p-5 shadow-sm transition hover:-translate-y-1 hover:shadow-lg"
+          <motion.p
+            initial={{ opacity: 0, x: -20 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ delay: 0.2 }}
+            className="text-sm font-semibold uppercase tracking-[0.18em] text-indigo-400"
           >
-            <div className="flex items-start justify-between">
+            {eyebrow}
+          </motion.p>
+
+          <motion.h1
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.3 }}
+            className="mt-3 text-3xl font-bold tracking-tight sm:text-4xl"
+          >
+            {title}
+          </motion.h1>
+
+          <motion.p
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 0.4 }}
+            className="mt-3 max-w-2xl leading-7 text-slate-400"
+          >
+            {description}
+          </motion.p>
+        </div>
+      </motion.section>
+
+      <motion.section
+        variants={containerVariants}
+        className="mt-6 grid gap-4 sm:grid-cols-2 xl:grid-cols-4"
+      >
+        {statistics.map(({ label, value, description, icon: Icon, color }, idx) => (
+          <motion.article
+            key={label}
+            variants={itemVariants}
+            whileHover={{ y: -5, scale: 1.02, rotateX: 5, rotateY: -5 }}
+            style={{ perspective: 1000 }}
+            className="group relative overflow-hidden rounded-3xl bg-slate-900/40 p-5 shadow-xl ring-1 ring-white/10 backdrop-blur-xl transition-all duration-300 hover:bg-slate-800/60 hover:ring-white/20"
+          >
+            <div className="absolute inset-0 bg-gradient-to-br from-white/5 to-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
+            <div className="relative flex items-start justify-between">
               <span
-                className={`grid size-12 place-items-center rounded-2xl ${colors[color]}`}
+                className={`grid size-12 place-items-center rounded-2xl border ${colors[color]}`}
               >
                 <Icon className="size-6" />
               </span>
             </div>
 
-            <p className="mt-4 text-3xl font-bold tracking-tight">{value}</p>
-            <p className="mt-1 font-semibold text-slate-800">{label}</p>
-            <p className="mt-1 text-sm text-slate-500">{description}</p>
-          </article>
+            <div className="relative mt-4">
+              <p className="text-3xl font-bold tracking-tight text-white">{value}</p>
+              <p className="mt-1 font-medium text-slate-300">{label}</p>
+              <p className="mt-1 text-sm text-slate-500">{description}</p>
+            </div>
+          </motion.article>
         ))}
-      </section>
+      </motion.section>
 
       <div className="mt-6 grid gap-6 lg:grid-cols-[1fr_380px]">
-        <section className="rounded-3xl border border-slate-200 bg-white shadow-sm">
-          <div className="border-b border-slate-100 px-6 py-4">
-            <h2 className="font-semibold text-slate-950">Recent notices</h2>
+        <motion.section variants={itemVariants} className="overflow-hidden rounded-3xl bg-slate-900/40 shadow-xl ring-1 ring-white/10 backdrop-blur-xl">
+          <div className="border-b border-white/5 bg-white/5 px-6 py-4">
+            <h2 className="font-semibold text-white">Recent notices</h2>
           </div>
 
-          <div className="divide-y divide-slate-100">
-            {notices.map((notice) => (
-              <div key={notice.title} className="flex items-start gap-4 px-6 py-4">
-                <div className="flex-1 min-w-0">
-                  <p className="truncate font-medium text-slate-900">
+          <div className="divide-y divide-white/5">
+            {notices.map((notice, idx) => (
+              <motion.div
+                key={notice.title}
+                initial={{ opacity: 0, x: -10 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ delay: 0.5 + idx * 0.1 }}
+                className="flex items-start gap-4 px-6 py-4 transition hover:bg-white/[0.02]"
+              >
+                <div className="min-w-0 flex-1">
+                  <p className="truncate font-medium text-slate-200">
                     {notice.title}
                   </p>
-                  <p className="mt-0.5 text-sm text-slate-500">
+                  <p className="mt-0.5 text-sm text-slate-400">
                     {notice.category} · {notice.date}
                   </p>
                 </div>
                 <span
-                  className={`shrink-0 rounded-full px-2.5 py-1 text-xs font-semibold ${priorities[notice.priority]}`}
+                  className={`shrink-0 rounded-full border px-2.5 py-1 text-xs font-medium ${priorities[notice.priority]}`}
                 >
                   {notice.priority}
                 </span>
-              </div>
+              </motion.div>
             ))}
           </div>
-        </section>
+        </motion.section>
 
-        <section className="rounded-3xl border border-slate-200 bg-white shadow-sm">
-          <div className="border-b border-slate-100 px-6 py-4">
-            <h2 className="font-semibold text-slate-950">Upcoming</h2>
+        <motion.section variants={itemVariants} className="overflow-hidden rounded-3xl bg-slate-900/40 shadow-xl ring-1 ring-white/10 backdrop-blur-xl">
+          <div className="border-b border-white/5 bg-white/5 px-6 py-4">
+            <h2 className="font-semibold text-white">Upcoming</h2>
           </div>
 
-          <div className="divide-y divide-slate-100">
-            {upcoming.map((item) => (
-              <div key={item.title} className="px-6 py-4">
-                <p className="font-medium text-slate-900">{item.title}</p>
-                <p className="mt-0.5 text-sm text-slate-500">{item.subtitle}</p>
-                <p className="mt-1 text-xs font-medium text-indigo-600">
+          <div className="divide-y divide-white/5">
+            {upcoming.map((item, idx) => (
+              <motion.div
+                key={item.title}
+                initial={{ opacity: 0, x: 10 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ delay: 0.5 + idx * 0.1 }}
+                className="px-6 py-4 transition hover:bg-white/[0.02]"
+              >
+                <p className="font-medium text-slate-200">{item.title}</p>
+                <p className="mt-0.5 text-sm text-slate-400">{item.subtitle}</p>
+                <p className="mt-1 text-xs font-medium text-indigo-400">
                   {item.time}
                 </p>
-              </div>
+              </motion.div>
             ))}
           </div>
-        </section>
+        </motion.section>
       </div>
-    </div>
+    </motion.div>
   );
 }

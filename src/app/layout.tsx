@@ -16,6 +16,8 @@ export const metadata: Metadata = {
     "A modern student management platform for colleges and universities.",
 };
 
+import { Toaster } from "sonner";
+
 export default function RootLayout({
   children,
 }: Readonly<{
@@ -25,6 +27,7 @@ export default function RootLayout({
     <html lang="en" suppressHydrationWarning>
       <body className={`${inter.variable} min-h-screen antialiased`}>
         {children}
+        <Toaster position="top-right" />
       </body>
     </html>
   );
