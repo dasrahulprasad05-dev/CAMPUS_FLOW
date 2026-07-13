@@ -6,6 +6,8 @@ declare global {
   var __prisma: PrismaClient | undefined;
 }
 
+import { Pool } from "@neondatabase/serverless";
+
 function makePrismaClient(): PrismaClient {
   const url = process.env.DATABASE_URL || "postgres://dummy:dummy@dummy/dummy";
 
@@ -15,7 +17,8 @@ function makePrismaClient(): PrismaClient {
     );
   }
 
-  const adapter = new PrismaNeon({ connectionString: url });
+  const pool = new Pool({ connectionString: url });
+  const adapter = new PrismaNeon(pool);
 
   return new PrismaClient({
     adapter,
