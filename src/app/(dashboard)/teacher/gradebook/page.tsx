@@ -1,18 +1,25 @@
-export const dynamic = "force-dynamic";
+import { requireUser } from "@/lib/auth";
+import { redirect } from "next/navigation";
+import { getTeacherAssignments } from "@/app/actions/teacher";
+import { GradebookManager } from "./gradebook-manager";
 
-import { requireRole } from "@/lib/auth";
+export const metadata = {
+  title: "Gradebook | CampusFlow",
+};
 
-export default async function Page() {
-  await requireRole(["teacher"]);
+export default async function GradebookPage() {
+  const profile = await requireUser();
+  if (profile.role !== "teacher") redirect("/login");
+
+  const assignments = await getTeacherAssignments();
 
   return (
-    <div className="mx-auto max-w-7xl">
-      <div className="rounded-3xl bg-white p-8 shadow-sm border border-slate-200">
-        <h1 className="text-2xl font-bold tracking-tight text-slate-950">Gradebook</h1>
-        <p className="mt-2 text-slate-500">
-          This page is under construction. It will be implemented in the next phase.
-        </p>
+    <div className="flex-1 space-y-4 p-4 md:p-8 pt-6">
+      <div className="flex items-center justify-between space-y-2">
+        <h2 className="text-3xl font-bold tracking-tight">Gradebook</h2>
       </div>
+
+      <GradebookManager assignments={assignments} />
     </div>
   );
 }

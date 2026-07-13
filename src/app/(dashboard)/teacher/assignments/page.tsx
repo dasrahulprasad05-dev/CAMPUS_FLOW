@@ -1,18 +1,33 @@
-export const dynamic = "force-dynamic";
+import { requireUser } from "@/lib/auth";
+import { redirect } from "next/navigation";
+import { getTeacherAssignments } from "@/app/actions/teacher";
+import { getTeacherAssignments as getAssignmentsList } from "@/app/actions/assignments";
+import { AssignmentsManager } from "./assignments-manager";
 
-import { requireRole } from "@/lib/auth";
+export const metadata = {
+  title: "Assignments | CampusFlow",
+};
 
-export default async function Page() {
-  await requireRole(["teacher"]);
+export default async function AssignmentsPage() {
+  const profile = await requireUser();
+  if (profile.role !== "teacher") redirect("/login");
+
+  // Get teaching assignments (the classes they teach)
+  const teachingAssignments = await getTeacherAssignments();
+  
+  // Get homework assignments they've created
+  const createdAssignments = await getAssignmentsList();
 
   return (
-    <div className="mx-auto max-w-7xl">
-      <div className="rounded-3xl bg-white p-8 shadow-sm border border-slate-200">
-        <h1 className="text-2xl font-bold tracking-tight text-slate-950">Assignments</h1>
-        <p className="mt-2 text-slate-500">
-          This page is under construction. It will be implemented in the next phase.
-        </p>
+    <div className="flex-1 space-y-4 p-4 md:p-8 pt-6">
+      <div className="flex items-center justify-between space-y-2">
+        <h2 className="text-3xl font-bold tracking-tight">Assignments</h2>
       </div>
+
+      <AssignmentsManager 
+        teachingAssignments={teachingAssignments} 
+        createdAssignments={createdAssignments} 
+      />
     </div>
   );
 }
