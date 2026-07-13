@@ -46,10 +46,18 @@ export async function getCurrentProfile(): Promise<AuthenticatedProfile | null> 
 }
 
 export async function requireUser(): Promise<AuthenticatedProfile> {
+  const session = await auth();
+
+  if (!session?.user?.id) {
+    redirect("/login");
+  }
+
   const profile = await getCurrentProfile();
 
   if (!profile) {
-    redirect("/login");
+    // Stale session (user deleted or DB reset). Clear the next-auth cookie!
+    // redirect('/login') will cause a loop if middleware thinks we're logged in.
+    redirect("/api/auth/signout");
   }
 
   if (!profile.isActive) {
