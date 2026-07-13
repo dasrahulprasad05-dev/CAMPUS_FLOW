@@ -3,7 +3,7 @@
 import { ParentRequest, User, ParentStudentLink, StudentProfile } from "@prisma/client";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
-import { approveParentRequest, rejectParentRequest, toggleUserActive } from "@/app/actions/parent-requests";
+import { approveParentRequest, rejectParentRequest } from "@/app/actions/parent-requests";
 import { Check, X, Power, PowerOff } from "lucide-react";
 import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
