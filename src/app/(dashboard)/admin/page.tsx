@@ -2,6 +2,7 @@ export const dynamic = "force-dynamic";
 
 import { requireRole } from "@/lib/auth";
 import { DashboardOverview } from "@/components/dashboard/dashboard-overview";
+import { prisma } from "@/lib/prisma";
 import {
   BarChart3,
   School,
@@ -12,6 +13,13 @@ import {
 export default async function AdminDashboardPage() {
   const profile = await requireRole(["admin"]);
 
+  // Fetch real statistics from database
+  const [totalUsers, totalDepartments, pendingRequests] = await Promise.all([
+    prisma.user.count(),
+    prisma.department.count(),
+    prisma.parentRequest.count({ where: { status: "pending" } }),
+  ]);
+
   return (
     <DashboardOverview
       eyebrow="Administrator portal"
@@ -20,14 +28,14 @@ export default async function AdminDashboardPage() {
       statistics={[
         {
           label: "Total users",
-          value: "1,284",
+          value: totalUsers.toLocaleString(),
           description: "Active accounts",
           icon: <Users />,
           color: "indigo",
         },
         {
           label: "Departments",
-          value: "08",
+          value: totalDepartments.toString().padStart(2, "0"),
           description: "Active programs",
           icon: <School />,
           color: "cyan",
@@ -41,7 +49,7 @@ export default async function AdminDashboardPage() {
         },
         {
           label: "Pending requests",
-          value: "14",
+          value: pendingRequests.toString(),
           description: "Require action",
           icon: <ShieldCheck />,
           color: "amber",
@@ -49,27 +57,9 @@ export default async function AdminDashboardPage() {
       ]}
       notices={[
         {
-          title: "Annual accreditation report due",
-          category: "Compliance",
+          title: "System Update Complete",
+          category: "System",
           date: "Today",
-          priority: "Urgent",
-        },
-        {
-          title: "New batch enrollment open",
-          category: "Admissions",
-          date: "Yesterday",
-          priority: "Important",
-        },
-        {
-          title: "Faculty evaluation forms distributed",
-          category: "HR",
-          date: "2 days ago",
-          priority: "Normal",
-        },
-        {
-          title: "Infrastructure maintenance scheduled",
-          category: "Facilities",
-          date: "5 days ago",
           priority: "Normal",
         },
       ]}
@@ -78,16 +68,6 @@ export default async function AdminDashboardPage() {
           title: "Board of directors meeting",
           subtitle: "Conference room A",
           time: "Tomorrow 10:00 AM",
-        },
-        {
-          title: "Semester start – Spring batch",
-          subtitle: "All departments",
-          time: "Jan 6, 2025",
-        },
-        {
-          title: "Accreditation report submission",
-          subtitle: "Quality assurance office",
-          time: "Jan 15, 2025",
         },
       ]}
     />

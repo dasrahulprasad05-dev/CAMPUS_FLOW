@@ -37,6 +37,11 @@ export const navigationByRole: Record<UserRole, NavigationItem[]> = {
       icon: BookOpen,
     },
     {
+      label: "Attendance",
+      href: "/student/attendance",
+      icon: ClipboardCheck,
+    },
+    {
       label: "Assignments",
       href: "/student/assignments",
       icon: ClipboardCheck,
@@ -50,6 +55,11 @@ export const navigationByRole: Record<UserRole, NavigationItem[]> = {
       label: "Grades",
       href: "/student/grades",
       icon: GraduationCap,
+    },
+    {
+      label: "Study Materials",
+      href: "/student/materials",
+      icon: FileText,
     },
     {
       label: "Notices",
@@ -116,6 +126,11 @@ export const navigationByRole: Record<UserRole, NavigationItem[]> = {
       label: "Gradebook",
       href: "/teacher/gradebook",
       icon: GraduationCap,
+    },
+    {
+      label: "Study Materials",
+      href: "/teacher/materials",
+      icon: FileText,
     },
     {
       label: "Publish notice",
